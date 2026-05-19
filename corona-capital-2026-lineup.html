@@ -316,6 +316,11 @@
     display: block;
     border-radius: 4px;
   }
+  /* Desktop default: embed appears at the bottom of the cluster.
+     Inline slots (one per artist) stay out of the grid. */
+  .embed-slot-inline {
+    display: none;
+  }
 
   footer {
     text-align: center;
@@ -337,7 +342,18 @@
     .day-header { grid-template-columns: 1fr; gap: 8px; }
     .day-meta { text-align: left; }
     .cluster { padding: 18px 16px 22px; }
-    .artist-grid { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); }
+    .artist-grid { grid-template-columns: 1fr; }
+    .artist { min-height: 0; }
+    /* Mobile: embed appears directly under the tapped artist, not at the
+       bottom of the cluster. Swap which slot type is rendered. */
+    .embed-slot-inline { display: block; }
+    .embed-slot-cluster { display: none; }
+    /* Spotify's full-preview embed (352px) needs ~400px+ width to render
+       its album-art + tracks layout. On mobile, use the compact embed
+       (152px) — fits any width, shows the play bar with the current track. */
+    .embed-slot iframe,
+    .embed-slot .embed-mount { height: 152px; }
+    .embed-slot.open { max-height: 172px; }
     .coord { font-size: 9px; }
   }
 </style>
@@ -596,15 +612,19 @@ function renderArtist(artist) {
 
 function renderCluster(cluster) {
   const count = cluster.artists.length;
-  const artistsHTML = cluster.artists.map(renderArtist).join('');
+  // Each artist gets its own inline embed slot for mobile (directly below the
+  // tapped artist). The cluster-level slot at the bottom is for desktop.
+  const gridItems = cluster.artists.map(a =>
+    renderArtist(a) + '<div class="embed-slot embed-slot-inline"></div>'
+  ).join('');
   return `
     <div class="cluster">
       <div class="cluster-header">
         <div class="cluster-genre">${escapeHtml(cluster.genre)}</div>
         <div class="cluster-count">${pad2(count)} ARTIST${count === 1 ? '' : 'S'}</div>
       </div>
-      <div class="artist-grid">${artistsHTML}</div>
-      <div class="embed-slot" data-embed-slot></div>
+      <div class="artist-grid">${gridItems}</div>
+      <div class="embed-slot embed-slot-cluster"></div>
     </div>
   `;
 }
@@ -635,8 +655,39 @@ document.getElementById('app').innerHTML = DAY_ORDER.map(renderDay).join('');
 let SpotifyAPI = null;
 let pendingMount = null;
 
+// Pre-warmed shared controller. iOS Safari requires .play() to be called
+// SYNCHRONOUSLY inside the user-gesture event handler — but createController's
+// callback is async, so on first click the gesture has gone stale by the time
+// the callback fires, and mobile blocks autoplay. We solve this by creating
+// one controller up front in a hidden offscreen mount. On click, we move that
+// iframe into the clicked slot and call loadUri + play synchronously.
+let sharedController = null;
+let sharedIframe = null;
+let hiddenMount = null;
+const PRELOAD_URI = 'spotify:artist:3AA28KZvwAUcZuOKwyblJQ'; // Gorillaz (a placeholder, paused immediately)
+
 window.onSpotifyIframeApiReady = (api) => {
   SpotifyAPI = api;
+
+  // Spin up the shared controller offscreen. We use the actual viewport width
+  // so Spotify's iframe renders its content at a width that matches where it
+  // will end up (preventing overflow when moved into a narrower mobile slot).
+  hiddenMount = document.createElement('div');
+  hiddenMount.id = 'spotify-prewarmed-mount';
+  hiddenMount.style.cssText = 'position:fixed;left:-9999px;top:-9999px;width:100vw;pointer-events:none;';
+  document.body.appendChild(hiddenMount);
+
+  api.createController(
+    hiddenMount,
+    { uri: PRELOAD_URI, width: '100%', height: 352 },
+    (controller) => {
+      sharedController = controller;
+      sharedIframe = hiddenMount.querySelector('iframe');
+      // We don't want the placeholder actually playing in the background.
+      try { controller.pause(); } catch (e) {}
+    }
+  );
+
   if (pendingMount) { pendingMount(); pendingMount = null; }
 };
 
@@ -661,19 +712,27 @@ function closeOpenEmbed() {
   if (!openSlot) return;
   const slotToClose = openSlot;
   const buttonToClear = openButton;
-  const controllerToDestroy = openController;
+  const controllerToHandle = openController;
   slotToClose.classList.remove('open');
   if (buttonToClear) buttonToClear.classList.remove('active');
   openSlot = null;
   openButton = null;
   openController = null;
-  if (controllerToDestroy) {
-    try { controllerToDestroy.pause(); } catch (e) {}
-    try { controllerToDestroy.destroy(); } catch (e) {}
+  // Pause immediately (the slide-close animation hides the player visually,
+  // but audio would keep playing without this).
+  if (controllerToHandle) {
+    try { controllerToHandle.pause(); } catch (e) {}
   }
   setTimeout(() => {
     if (!slotToClose.classList.contains('open')) {
-      slotToClose.innerHTML = '';
+      // Shared controller's iframe: move it back to the hidden mount so it
+      // stays alive for the next click (preserves autoplay capability).
+      // Per-slot fallback iframe: just wipe.
+      if (sharedIframe && slotToClose.contains(sharedIframe)) {
+        if (hiddenMount) hiddenMount.appendChild(sharedIframe);
+      } else {
+        slotToClose.innerHTML = '';
+      }
     }
   }, 400);
 }
@@ -697,7 +756,12 @@ document.addEventListener('click', function(e) {
 
   if (id) {
     const cluster = btn.closest('.cluster');
-    const slot = cluster.querySelector('[data-embed-slot]');
+    // Mobile: embed slot is the sibling immediately after the tapped artist.
+    // Desktop: embed slot is the cluster-level one at the bottom.
+    const isMobile = window.matchMedia('(max-width: 640px)').matches;
+    const slot = isMobile
+      ? btn.nextElementSibling
+      : cluster.querySelector('.embed-slot-cluster');
 
     // If clicking the already-active artist, toggle closed
     if (openButton === btn) {
@@ -710,13 +774,7 @@ document.addEventListener('click', function(e) {
       closeOpenEmbed();
     }
 
-    // Mount point for Spotify IFrame API (it replaces this div with the iframe)
-    slot.innerHTML = '<div class="embed-mount"></div>';
-    const mount = slot.querySelector('.embed-mount');
-
-    // Set state FIRST so the async createController callback sees the right
-    // openSlot when it fires (otherwise the first-ever click destroys its own
-    // controller because openSlot is still null at callback time).
+    // Set state FIRST so async callbacks see the right openSlot.
     cluster.querySelectorAll('.artist.active').forEach(a => a.classList.remove('active'));
     openSlot = slot;
     openButton = btn;
@@ -738,36 +796,60 @@ document.addEventListener('click', function(e) {
       `;
     };
 
-    const mountController = () => {
-      if (openSlot !== slot) return;
-      try {
-        SpotifyAPI.createController(
-          mount,
-          { uri: `spotify:artist:${id}`, width: '100%', height: 352 },
-          (controller) => {
-            if (openSlot !== slot) { try { controller.destroy(); } catch (e) {} return; }
-            openController = controller;
-            try { controller.play(); } catch (e) {}
-          }
-        );
-      } catch (e) {
-        renderFallbackIframe();
-      }
-    };
-
-    if (SpotifyAPI) {
-      mountController();
+    if (isMobile) {
+      // MOBILE: render a basic iframe. The IFrame API has two problems on
+      // mobile: (1) Spotify content rendered for hidden-mount width doesn't
+      // reflow when moved to a narrow mobile slot, and (2) the async
+      // createController callback fires after iOS Safari considers the
+      // user gesture stale, so autoplay would be blocked anyway. The user
+      // taps Spotify's play button — same as any other Spotify embed on
+      // mobile. The iframe is created at the slot's actual width.
+      renderFallbackIframe();
+    } else if (sharedController && sharedIframe) {
+      // DESKTOP HOT PATH: shared controller is ready. Move its iframe into
+      // this slot and call loadUri + play SYNCHRONOUSLY (no async gap) so
+      // autoplay works on every click after the first.
+      slot.innerHTML = '';
+      slot.appendChild(sharedIframe);
+      openController = sharedController;
+      try { sharedController.loadUri(`spotify:artist:${id}`); } catch (e) {}
+      try { sharedController.play(); } catch (e) {}
     } else {
-      pendingMount = mountController;
-      // Safety net: if the Spotify IFrame API never loads (network blocked,
-      // offline, etc.) within 3 seconds, fall back to the basic iframe so
-      // the embed still works — just without autoplay.
-      setTimeout(() => {
-        if (openSlot === slot && !openController && !slot.querySelector('iframe')) {
-          pendingMount = null;
+      // DESKTOP COLD PATH: API not ready yet (first click during the ~1s
+      // before the IFrame API script finishes loading). Mount a per-slot
+      // controller. May not autoplay on this first click; subsequent clicks
+      // go through the hot path.
+      slot.innerHTML = '<div class="embed-mount"></div>';
+      const mount = slot.querySelector('.embed-mount');
+
+      const mountController = () => {
+        if (openSlot !== slot) return;
+        try {
+          SpotifyAPI.createController(
+            mount,
+            { uri: `spotify:artist:${id}`, width: '100%', height: 352 },
+            (controller) => {
+              if (openSlot !== slot) { try { controller.destroy(); } catch (e) {} return; }
+              openController = controller;
+              try { controller.play(); } catch (e) {}
+            }
+          );
+        } catch (e) {
           renderFallbackIframe();
         }
-      }, 3000);
+      };
+
+      if (SpotifyAPI) {
+        mountController();
+      } else {
+        pendingMount = mountController;
+        setTimeout(() => {
+          if (openSlot === slot && !openController && !slot.querySelector('iframe')) {
+            pendingMount = null;
+            renderFallbackIframe();
+          }
+        }, 3000);
+      }
     }
 
     setTimeout(() => {
