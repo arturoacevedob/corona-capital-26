@@ -1,0 +1,791 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Corona Capital 2026 — Lineup by Genre</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preconnect" href="https://open.spotify.com">
+<link rel="dns-prefetch" href="https://open.spotify.com">
+<link rel="preconnect" href="https://i.scdn.co" crossorigin>
+<link rel="dns-prefetch" href="https://i.scdn.co">
+<link rel="preconnect" href="https://image-cdn-ak.spotifycdn.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Archivo:wght@400;500;700;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://open.spotify.com/embed/iframe-api/v1" async></script>
+<style>
+  :root {
+    --cc-blue: #1F3FFF;
+    --cc-blue-deep: #0A1FB8;
+    --cc-yellow: #E8FF00;
+    --cc-white: #F5F5F0;
+    --cc-grid: rgba(255,255,255,0.10);
+    --cc-grid-strong: rgba(255,255,255,0.18);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html, body {
+    background: var(--cc-blue);
+    color: var(--cc-white);
+    font-family: 'Archivo', sans-serif;
+    font-weight: 400;
+    overflow-x: hidden;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  body {
+    background-image:
+      linear-gradient(var(--cc-grid) 1px, transparent 1px),
+      linear-gradient(90deg, var(--cc-grid) 1px, transparent 1px);
+    background-size: 60px 60px;
+    background-position: -1px -1px;
+    min-height: 100vh;
+    padding-bottom: 120px;
+  }
+
+  .coord {
+    position: fixed;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: rgba(255,255,255,0.6);
+    letter-spacing: 0.05em;
+    z-index: 5;
+    pointer-events: none;
+  }
+  .coord.tl { top: 16px; left: 20px; }
+  .coord.tr { top: 16px; right: 20px; }
+  .coord.bl { bottom: 16px; left: 20px; }
+  .coord.br { bottom: 16px; right: 20px; }
+
+  header { padding: 80px 32px 40px; text-align: center; position: relative; }
+
+  .eyebrow {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    letter-spacing: 0.3em;
+    color: var(--cc-yellow);
+    margin-bottom: 16px;
+  }
+
+  h1.fest-title {
+    font-family: 'Anton', sans-serif;
+    font-size: clamp(64px, 14vw, 180px);
+    line-height: 0.85;
+    letter-spacing: -0.02em;
+    text-transform: uppercase;
+    color: var(--cc-white);
+    margin-bottom: 8px;
+  }
+  h1.fest-title .year { color: var(--cc-yellow); display: inline-block; }
+
+  .subtitle {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    letter-spacing: 0.15em;
+    color: rgba(255,255,255,0.85);
+    margin-top: 16px;
+  }
+
+  .intro {
+    max-width: 640px;
+    margin: 40px auto 0;
+    font-size: 15px;
+    line-height: 1.6;
+    color: rgba(255,255,255,0.85);
+    text-align: left;
+    border-left: 2px solid var(--cc-yellow);
+    padding-left: 20px;
+  }
+  .intro strong { color: var(--cc-yellow); font-weight: 700; }
+
+  .day-nav {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    background: var(--cc-blue);
+    border-bottom: 1px solid var(--cc-grid-strong);
+    padding: 12px 24px;
+    display: flex;
+    gap: 4px;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+  .day-nav button {
+    background: transparent;
+    border: 1px solid rgba(255,255,255,0.25);
+    color: var(--cc-white);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    letter-spacing: 0.1em;
+    padding: 8px 14px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    text-transform: uppercase;
+  }
+  .day-nav button:hover {
+    background: var(--cc-yellow);
+    color: var(--cc-blue);
+    border-color: var(--cc-yellow);
+  }
+
+  main { max-width: 1280px; margin: 0 auto; padding: 40px 24px; }
+
+  .day { margin-bottom: 100px; position: relative; }
+
+  .day-header {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    align-items: end;
+    gap: 24px;
+    border-bottom: 2px solid var(--cc-yellow);
+    padding-bottom: 16px;
+    margin-bottom: 40px;
+  }
+
+  .day-num {
+    font-family: 'Anton', sans-serif;
+    font-size: clamp(40px, 8vw, 88px);
+    line-height: 0.9;
+    color: var(--cc-yellow);
+    letter-spacing: -0.02em;
+  }
+
+  .day-info { display: flex; flex-direction: column; gap: 4px; }
+  .day-name {
+    font-family: 'Anton', sans-serif;
+    font-size: clamp(28px, 5vw, 48px);
+    line-height: 1;
+    text-transform: uppercase;
+    color: var(--cc-white);
+  }
+  .day-headliner {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    letter-spacing: 0.15em;
+    color: rgba(255,255,255,0.75);
+    text-transform: uppercase;
+  }
+
+  .day-meta {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    color: rgba(255,255,255,0.6);
+    text-align: right;
+    text-transform: uppercase;
+  }
+
+  .day-tagline {
+    max-width: 540px;
+    margin-bottom: 48px;
+    font-size: 16px;
+    line-height: 1.6;
+    color: rgba(255,255,255,0.85);
+    font-style: italic;
+  }
+
+  .clusters { display: grid; gap: 32px; }
+
+  .cluster {
+    border: 1px solid var(--cc-grid-strong);
+    padding: 24px 24px 28px;
+    background: rgba(0,0,0,0.08);
+  }
+
+  .cluster-header {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 20px;
+    padding-bottom: 12px;
+    border-bottom: 1px dashed rgba(255,255,255,0.2);
+  }
+  .cluster-genre {
+    font-family: 'Anton', sans-serif;
+    font-size: clamp(22px, 3vw, 30px);
+    letter-spacing: 0.01em;
+    text-transform: uppercase;
+    color: var(--cc-yellow);
+  }
+  .cluster-count {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    color: rgba(255,255,255,0.55);
+    white-space: nowrap;
+  }
+
+  .artist-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 10px;
+  }
+
+  .artist {
+    display: flex;
+    flex-direction: column;
+    background: var(--cc-blue-deep);
+    border: 1px solid rgba(255,255,255,0.18);
+    padding: 16px 14px 14px;
+    min-height: 120px;
+    cursor: pointer;
+    transition: background 0.15s ease, border-color 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
+    text-align: left;
+    color: inherit;
+    font-family: inherit;
+    width: 100%;
+  }
+  .artist:hover {
+    background: var(--cc-yellow);
+    border-color: var(--cc-yellow);
+    transform: translate(-2px, -2px);
+    box-shadow: 4px 4px 0 rgba(0,0,0,0.25);
+  }
+  .artist:hover .artist-name,
+  .artist:hover .artist-tag,
+  .artist:hover .artist-cue { color: var(--cc-blue-deep); }
+  .artist:hover .artist-cue { opacity: 1; }
+
+  .artist.active {
+    background: var(--cc-yellow);
+    border-color: var(--cc-yellow);
+    transform: translate(-2px, -2px);
+    box-shadow: 4px 4px 0 rgba(0,0,0,0.25);
+  }
+  .artist.active .artist-name,
+  .artist.active .artist-tag,
+  .artist.active .artist-cue { color: var(--cc-blue-deep); }
+  .artist.active .artist-cue { opacity: 1; }
+
+  .artist-name {
+    font-family: 'Archivo', sans-serif;
+    font-weight: 900;
+    font-size: 17px;
+    line-height: 1.1;
+    letter-spacing: -0.01em;
+    color: var(--cc-white);
+    text-transform: uppercase;
+    margin-bottom: 10px;
+    pointer-events: none;
+  }
+  .artist-tag {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10.5px;
+    letter-spacing: 0.05em;
+    color: rgba(245,245,240,0.65);
+    line-height: 1.4;
+    text-transform: lowercase;
+    pointer-events: none;
+  }
+  .artist-cue {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    color: var(--cc-yellow);
+    margin-top: auto;
+    padding-top: 16px;
+    opacity: 0.7;
+    text-transform: uppercase;
+    pointer-events: none;
+  }
+  .artist[data-id] .artist-cue::before {
+    content: '▶ Tap to play';
+  }
+  .artist[data-id].active .artist-cue::before {
+    content: '× Tap to close';
+  }
+
+  .embed-slot {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.35s ease, margin-top 0.35s ease;
+    margin-top: 0;
+  }
+  .embed-slot.open {
+    max-height: 372px;
+    margin-top: 14px;
+  }
+  .embed-slot iframe,
+  .embed-slot .embed-mount {
+    width: 100%;
+    height: 352px;
+    border: 0;
+    background: transparent;
+    display: block;
+    border-radius: 4px;
+  }
+
+  footer {
+    text-align: center;
+    margin-top: 80px;
+    padding: 40px 24px;
+    border-top: 1px solid var(--cc-grid-strong);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.15em;
+    color: rgba(255,255,255,0.5);
+    text-transform: uppercase;
+  }
+  footer .venue { color: var(--cc-yellow); }
+
+  @media (max-width: 640px) {
+    body { background-size: 40px 40px; }
+    header { padding: 60px 20px 30px; }
+    main { padding: 30px 16px; }
+    .day-header { grid-template-columns: 1fr; gap: 8px; }
+    .day-meta { text-align: left; }
+    .cluster { padding: 18px 16px 22px; }
+    .artist-grid { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); }
+    .coord { font-size: 9px; }
+  }
+</style>
+</head>
+<body>
+
+<span class="coord tl">19°23'52.0"N</span>
+<span class="coord tr">99°05'11.0"W</span>
+<span class="coord bl">AUTÓDROMO HNOS. RODRÍGUEZ</span>
+<span class="coord br">CDMX · MX</span>
+
+<header>
+  <div class="eyebrow">NOVIEMBRE 20 · 21 · 22 · 2026</div>
+  <h1 class="fest-title">Corona<br>Capital <span class="year">26</span></h1>
+  <div class="subtitle">— LINEUP BY GENRE · TAP ANY ARTIST TO LISTEN —</div>
+  <div class="intro">
+    Every artist on the bill, sorted into <strong>genre clusters by day</strong>. Tap any name to drop in an embedded Spotify player below their cluster — no leaving the page. Headliners are highlighted in yellow.
+  </div>
+</header>
+
+<nav class="day-nav">
+  <button data-jump="friday">▸ Friday Nov 20</button>
+  <button data-jump="saturday">▸ Saturday Nov 21</button>
+  <button data-jump="sunday">▸ Sunday Nov 22</button>
+</nav>
+
+<main id="app"></main>
+
+<footer>
+  <div>LO QUE PASA AQUÍ, SE QUEDA CONTIGO</div>
+  <div style="margin-top: 8px;" class="venue">AUTÓDROMO HERMANOS RODRÍGUEZ · CIUDAD DE MÉXICO</div>
+  <div style="margin-top: 8px;">NOV 20 · 21 · 22 · 2026 — tickets: ticketmaster.com.mx</div>
+</footer>
+
+<script>
+const DATA = {
+  friday: {
+    num: "20",
+    name: "Friday",
+    meta: "DAY 01 / 03<br>NOV · VIERNES",
+    headliner: "Gorillaz",
+    tagline: "A folk-leaning, melodic day with strong R&B and alt-pop pockets.",
+    clusters: [
+      {
+        genre: "Electronic / Alt",
+        artists: [
+          { name: "Gorillaz", tag: "alt / electronic / hip-hop · headliner", id: "3AA28KZvwAUcZuOKwyblJQ", headliner: true },
+          { name: "James Blake", tag: "electronic / art pop", id: "53KwLdlmrlCelAZMaLVZqU" },
+          { name: "CHVRCHES", tag: "synth-pop", id: "3CjlHNtplJyTf9npxaPl5w" },
+          { name: "FCUKERS", tag: "house / electro", id: "3UtzOHYm3lQALkKzVD4wyO" }
+        ]
+      },
+      {
+        genre: "Alt rock / Indie rock",
+        artists: [
+          { name: "The Kooks", tag: "indie rock", id: "1GLtl8uqKmnyCWxHmw9tL4" },
+          { name: "Friko", tag: "dramatic indie rock", id: "5HViQsHNdOovxKa420CPGR" },
+          { name: "Hot Milk", tag: "pop-punk / emo", id: "1koutXdSFq2PHqtxSWj9tK" },
+          { name: "Violet Grohl", tag: "90s alt-rock revival", id: "3PbVZAe3y6cQKBDdG2YASB" },
+          { name: "Model/Actriz", tag: "post-punk / noise rock", id: "7gdb1IQFHFQqCc5KoLTYNC" }
+        ]
+      },
+      {
+        genre: "Folk rock",
+        artists: [
+          { name: "Mumford & Sons", tag: "folk rock", id: "3gd8FJtBJtkRxdfbTu19U2" }
+        ]
+      },
+      {
+        genre: "R&B / Soul",
+        artists: [
+          { name: "Daniel Caesar", tag: "contemporary R&B", id: "20wkVLutqVOYrc0kxFs7rA" },
+          { name: "JMSN", tag: "alt R&B / neo-soul", id: "6HCkJzbswOIc7Qc5TJ1n5l" },
+          { name: "Thee Sinseers", tag: "chicano soul / oldies", id: "5unhEp2PoIxAgEFNEyYdJS" },
+          { name: "Durand Jones & The Indications", tag: "retro soul", id: "6TVVIyd0fsRDGg6WzHKyTP" },
+          { name: "Darianna Everett", tag: "R&B / electronic", id: "01qiJfvXOvrFjFcwwmZ6yc" }
+        ]
+      },
+      {
+        genre: "Indie pop / Alt-pop",
+        artists: [
+          { name: "CMAT", tag: "indie country-pop", id: "3VBNIRx1LxVdRqOiPgkLwv" },
+          { name: "Grace Ives", tag: "bedroom electro-pop", id: "4TZieE5978SbTInJswaay2" },
+          { name: "Sofia Isella", tag: "dark pop / art pop", id: "40Aif8AfzbNGA2s52ESEE2" },
+          { name: "Anna Luna", tag: "indie pop", id: "6uGADSP0D3HW4ZpALfJwUR" },
+          { name: "Chezile", tag: "indie pop", id: "1EmdfupUQDpXOcb4Nj2mBH" }
+        ]
+      },
+      {
+        genre: "Hip-hop / Emerging",
+        artists: [
+          { name: "Yung Lean", tag: "cloud rap", id: "67lytN32YpUxiSeWlKfHJ3" },
+          { name: "Absolutely", tag: "electro-alt / indie", id: "4ellgkPyhbJetngXmHX5Zh" },
+          { name: "Olive Jones", tag: "emerging", id: "2DwbPVZ7uyW2B0AgoHuzLn" },
+          { name: "Rip Magic", tag: "emerging", id: "34VnmMzwkbqk09L8Gk1LyM" }
+        ]
+      }
+    ]
+  },
+  saturday: {
+    num: "21",
+    name: "Saturday",
+    meta: "DAY 02 / 03<br>NOV · SÁBADO",
+    headliner: "Twenty One Pilots",
+    tagline: "The most rock-heavy day, balanced by dreamy indie pop and an electronic spine.",
+    clusters: [
+      {
+        genre: "Alt rock / Indie rock",
+        artists: [
+          { name: "Twenty One Pilots", tag: "alt / genre-fluid · headliner", id: "3YQKmKGau1PzlVlkL1iodx", headliner: true },
+          { name: "Mother Mother", tag: "alt rock", id: "0e86yPdC41PGRkLp2Q1Bph" },
+          { name: "We Are Scientists", tag: "indie rock", id: "35YNL4wwv11ZkmeWWL51y7" }
+        ]
+      },
+      {
+        genre: "Punk / Hard rock",
+        artists: [
+          { name: "The Offspring", tag: "punk rock", id: "5LfGQac0EIXyAN8aUwmNAQ" },
+          { name: "Pierce The Veil", tag: "post-hardcore / emo", id: "4iJLPqClelZOBCBifm8Fzv" },
+          { name: "Militarie Gun", tag: "post-hardcore / indie", id: "4us4NMG5wuqdUZvthZrj0Q" }
+        ]
+      },
+      {
+        genre: "Electronic / Dance",
+        artists: [
+          { name: "Underworld", tag: "techno / electronic legends", id: "1PXHzxRDiLnjqNrRn2Xbsa" },
+          { name: "The Hellp", tag: "indie-electronic / new rave", id: "5DslL3PUa3BcRlCCEP64A4" },
+          { name: "Peaches", tag: "electroclash", id: "1gkSl4XpHIHI4I1WQbfXOE" }
+        ]
+      },
+      {
+        genre: "Indie pop / Dream pop",
+        artists: [
+          { name: "Maisie Peters", tag: "pop / pop-punk lean", id: "2RVvqRBon9NgaGXKfywDSs" },
+          { name: "Baby Queen", tag: "alt-pop", id: "4VqlewwKZJoIcA88PYHUDd" },
+          { name: "Jordana", tag: "bedroom / indie pop", id: "2WiBZEHY8flXsA94Wnv5qh" },
+          { name: "Princess Chelsea", tag: "dream / chamber pop", id: "6SrA4711bML5NvPO13Tr6t" },
+          { name: "Strawberry Guy", tag: "dream pop / chamber", id: "1AbJ2cmwK400LSvdvBL5Jc" },
+          { name: "Σtella", tag: "vintage pop / greek indie", id: "2tBWWgGv7H5ymPtJrT1rNu" },
+          { name: "BØRNS", tag: "indie pop", id: "1KP6TWI40m7p3QBTU6u2xo" },
+          { name: "Balu Brigada", tag: "groove / alt-pop", id: "6O9vGMmTwzihULICPCsNf2" },
+          { name: "Rikas", tag: "surf / indie pop", id: "3OWO2LOPTl1u6XvJHkwHmd" }
+        ]
+      },
+      {
+        genre: "Psych / Surf",
+        artists: [
+          { name: "Dope Lemon", tag: "psych / slacker rock", id: "7oZLKL1GjYiaAgssXsLmW8" },
+          { name: "Sawyer Hill", tag: "alt rock / americana", id: "3CwWzT9t3z7DARyhDIzwIG" }
+        ]
+      },
+      {
+        genre: "Other / Emerging",
+        artists: [
+          { name: "Quarters", tag: "indie / emerging", id: "0mnruuV4CcKu7Ux7kBZ5sa" },
+          { name: "MS*GLOOM", tag: "emerging", id: "3ZFdkChwfqb4vtzlBfcQPu" },
+          { name: "New Constellations", tag: "emerging", id: "5WF5jtgP0H31QTl5g4WxW9" }
+        ]
+      }
+    ]
+  },
+  sunday: {
+    num: "22",
+    name: "Sunday",
+    meta: "DAY 03 / 03<br>NOV · DOMINGO",
+    headliner: "The Strokes",
+    tagline: "The most eclectic day. Classic indie spine with strong hip-hop & electronic side rooms.",
+    clusters: [
+      {
+        genre: "Indie / Alt rock",
+        artists: [
+          { name: "The Strokes", tag: "indie rock · headliner", id: "0epOFNiUfyON9EYx7Tpr6V", headliner: true },
+          { name: "The xx", tag: "indie / minimalist", id: "3iOvXCl6edW5Um0fXEBRXy" },
+          { name: "Bad Suns", tag: "indie rock", id: "0YhUSm86okLWldQVwJkLlP" },
+          { name: "Good Kid", tag: "indie pop / rock", id: "38SKxCyfrmNWqWunb9wGHP" },
+          { name: "Ratboys", tag: "indie rock", id: "1SoBNpuC0N4nvaQFENS0qf" },
+          { name: "Tipling Rock", tag: "beach / indie pop", id: "2ZDHVJnLtH2KJfBFzShihr" },
+          { name: "Freak Slug", tag: "bedroom indie pop", id: "5wk7sY8GIg5ihSI09EbWeS" }
+        ]
+      },
+      {
+        genre: "Classic / Heritage rock",
+        artists: [
+          { name: "The Black Crowes", tag: "classic rock", id: "5krkohEVJYw0qoB5VWwxaC" },
+          { name: "Manic Street Preachers", tag: "alt / britrock", id: "2uH0RyPcX7fnCcT90HFDQX" },
+          { name: "Johnny Marr", tag: "alt rock · ex-smiths", id: "2bA2YuQk2ID3PWNXUhQrWS" }
+        ]
+      },
+      {
+        genre: "Pop / R&B-adjacent",
+        artists: [
+          { name: "Lola Young", tag: "soul / alt-pop", id: "67FB4n52MgexGQIG8s0yUH" },
+          { name: "Santigold", tag: "genre-fluid pop / electronic", id: "6Jrxnp0JgqmeUX1veU591p" },
+          { name: "ROAR", tag: "psych / chamber pop", id: "7dIpKWlEeAljA20vFJ82RD" },
+          { name: "Céline Dessberg", tag: "emerging pop", id: "4yrAcGcuF9KXNpeLXdwlGA" }
+        ]
+      },
+      {
+        genre: "Hip-hop",
+        artists: [
+          { name: "Lil Yachty", tag: "hip-hop / psych", id: "6icQOAFXDZKsumw3YXyusw" },
+          { name: "Loyle Carner", tag: "uk jazz rap", id: "4oDjh8wNW5vDHyFRrDYC4k" },
+          { name: "Rev Run", tag: "classic hip-hop · run-dmc", id: "2l7iQ6OowUofHBKzlNeLhY" }
+        ]
+      },
+      {
+        genre: "Electronic / Trip-hop",
+        artists: [
+          { name: "BUNT.", tag: "folk-tronica / edm · in the round", id: "2CpLIMBoE2ZzyY3ZBCRZ7j" },
+          { name: "Tricky", tag: "trip-hop legend", id: "6hhA8TKRNryM8FNzqCqdDO" },
+          { name: "Ela Minus", tag: "techno / electronic", id: "4rdJkXHNrMgowlwUdQAg8T" },
+          { name: "Purity Ring", tag: "electropop / synth", id: "1TtJ8j22Roc24e2Jx3OcU4" },
+          { name: "Ninajirachi", tag: "hyperpop / edm", id: "3MekbRujJg5VZThubOlrkR" },
+          { name: "Moyka", tag: "dream / synth-pop", id: "2u7pjisWrThF8JErPVIPlJ" }
+        ]
+      },
+      {
+        genre: "Experimental / Math rock",
+        artists: [
+          { name: "Angine de Poitrine", tag: "math rock / experimental", id: "13NmOYYfvONNZ9mn2qn8P2" }
+        ]
+      }
+    ]
+  }
+};
+
+const DAY_ORDER = ['friday', 'saturday', 'sunday'];
+
+function pad2(n) { return String(n).padStart(2, '0'); }
+
+function escapeHtml(s) {
+  return String(s)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+function renderArtist(artist) {
+  const headlinerClass = artist.headliner ? ' headliner' : '';
+  const dataAttrs = artist.id
+    ? `data-id="${escapeHtml(artist.id)}"`
+    : `data-search="${escapeHtml(artist.search || artist.name)}"`;
+  const cue = artist.id
+    ? ''
+    : '▶ Open in Spotify ↗';
+  return `
+    <button class="artist${headlinerClass}" ${dataAttrs} data-name="${escapeHtml(artist.name)}" type="button">
+      <div class="artist-name">${escapeHtml(artist.name)}</div>
+      <div class="artist-tag">${escapeHtml(artist.tag)}</div>
+      <div class="artist-cue">${cue}</div>
+    </button>
+  `;
+}
+
+function renderCluster(cluster) {
+  const count = cluster.artists.length;
+  const artistsHTML = cluster.artists.map(renderArtist).join('');
+  return `
+    <div class="cluster">
+      <div class="cluster-header">
+        <div class="cluster-genre">${escapeHtml(cluster.genre)}</div>
+        <div class="cluster-count">${pad2(count)} ARTIST${count === 1 ? '' : 'S'}</div>
+      </div>
+      <div class="artist-grid">${artistsHTML}</div>
+      <div class="embed-slot" data-embed-slot></div>
+    </div>
+  `;
+}
+
+function renderDay(key) {
+  const d = DATA[key];
+  const clustersHTML = d.clusters.map(renderCluster).join('');
+  return `
+    <section class="day" id="${key}">
+      <div class="day-header">
+        <div class="day-num">${d.num}</div>
+        <div class="day-info">
+          <div class="day-name">${d.name}</div>
+          <div class="day-headliner">Headliner · ${escapeHtml(d.headliner)}</div>
+        </div>
+        <div class="day-meta">${d.meta}</div>
+      </div>
+      <p class="day-tagline">${escapeHtml(d.tagline)}</p>
+      <div class="clusters">${clustersHTML}</div>
+    </section>
+  `;
+}
+
+document.getElementById('app').innerHTML = DAY_ORDER.map(renderDay).join('');
+
+// --- Spotify IFrame API (autoplay support) ---
+// The script tag is in <head> with async — this just receives the ready callback.
+let SpotifyAPI = null;
+let pendingMount = null;
+
+window.onSpotifyIframeApiReady = (api) => {
+  SpotifyAPI = api;
+  if (pendingMount) { pendingMount(); pendingMount = null; }
+};
+
+// Warm the cache: on hover, prefetch the artist's embed HTML so clicking it
+// feels near-instant. Each artist prefetches at most once.
+document.addEventListener('mouseover', (e) => {
+  const btn = e.target.closest && e.target.closest('.artist[data-id]');
+  if (!btn || btn._prefetched) return;
+  btn._prefetched = true;
+  const link = document.createElement('link');
+  link.rel = 'prefetch';
+  link.as = 'document';
+  link.href = `https://open.spotify.com/embed/artist/${encodeURIComponent(btn.dataset.id)}?utm_source=iframe-api`;
+  document.head.appendChild(link);
+}, { passive: true });
+
+let openSlot = null;
+let openButton = null;
+let openController = null;
+
+function closeOpenEmbed() {
+  if (!openSlot) return;
+  const slotToClose = openSlot;
+  const buttonToClear = openButton;
+  const controllerToDestroy = openController;
+  slotToClose.classList.remove('open');
+  if (buttonToClear) buttonToClear.classList.remove('active');
+  openSlot = null;
+  openButton = null;
+  openController = null;
+  if (controllerToDestroy) {
+    try { controllerToDestroy.pause(); } catch (e) {}
+    try { controllerToDestroy.destroy(); } catch (e) {}
+  }
+  setTimeout(() => {
+    if (!slotToClose.classList.contains('open')) {
+      slotToClose.innerHTML = '';
+    }
+  }, 400);
+}
+
+document.addEventListener('click', function(e) {
+  // Close button inside an embed
+  if (e.target.classList && e.target.classList.contains('embed-close')) {
+    e.stopPropagation();
+    closeOpenEmbed();
+    return;
+  }
+
+  // Artist button
+  const btn = e.target.closest('.artist');
+  if (!btn) return;
+
+  e.preventDefault();
+  const id = btn.dataset.id;
+  const search = btn.dataset.search;
+  const name = btn.dataset.name;
+
+  if (id) {
+    const cluster = btn.closest('.cluster');
+    const slot = cluster.querySelector('[data-embed-slot]');
+
+    // If clicking the already-active artist, toggle closed
+    if (openButton === btn) {
+      closeOpenEmbed();
+      return;
+    }
+
+    // If a different artist is open, close it first
+    if (openSlot && openSlot !== slot) {
+      closeOpenEmbed();
+    }
+
+    // Mount point for Spotify IFrame API (it replaces this div with the iframe)
+    slot.innerHTML = '<div class="embed-mount"></div>';
+    const mount = slot.querySelector('.embed-mount');
+
+    // Set state FIRST so the async createController callback sees the right
+    // openSlot when it fires (otherwise the first-ever click destroys its own
+    // controller because openSlot is still null at callback time).
+    cluster.querySelectorAll('.artist.active').forEach(a => a.classList.remove('active'));
+    openSlot = slot;
+    openButton = btn;
+    btn.classList.add('active');
+
+    requestAnimationFrame(() => {
+      slot.classList.add('open');
+    });
+
+    const renderFallbackIframe = () => {
+      if (openSlot !== slot) return;
+      slot.innerHTML = `
+        <iframe
+          src="https://open.spotify.com/embed/artist/${encodeURIComponent(id)}?utm_source=generator&theme=0"
+          allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
+          loading="eager"
+          referrerpolicy="strict-origin-when-cross-origin"
+          title="Spotify player for ${escapeHtml(name)}"></iframe>
+      `;
+    };
+
+    const mountController = () => {
+      if (openSlot !== slot) return;
+      try {
+        SpotifyAPI.createController(
+          mount,
+          { uri: `spotify:artist:${id}`, width: '100%', height: 352 },
+          (controller) => {
+            if (openSlot !== slot) { try { controller.destroy(); } catch (e) {} return; }
+            openController = controller;
+            try { controller.play(); } catch (e) {}
+          }
+        );
+      } catch (e) {
+        renderFallbackIframe();
+      }
+    };
+
+    if (SpotifyAPI) {
+      mountController();
+    } else {
+      pendingMount = mountController;
+      // Safety net: if the Spotify IFrame API never loads (network blocked,
+      // offline, etc.) within 3 seconds, fall back to the basic iframe so
+      // the embed still works — just without autoplay.
+      setTimeout(() => {
+        if (openSlot === slot && !openController && !slot.querySelector('iframe')) {
+          pendingMount = null;
+          renderFallbackIframe();
+        }
+      }, 3000);
+    }
+
+    setTimeout(() => {
+      slot.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }, 300);
+  } else if (search) {
+    const q = encodeURIComponent(search);
+    window.open('https://open.spotify.com/search/' + q, '_blank', 'noopener,noreferrer');
+  }
+}, false);
+
+document.querySelectorAll('.day-nav button').forEach(b => {
+  b.addEventListener('click', () => {
+    const target = document.getElementById(b.dataset.jump);
+    if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  });
+});
+</script>
+
+</body>
+</html>
