@@ -44,20 +44,6 @@
     padding-bottom: 120px;
   }
 
-  .coord {
-    position: fixed;
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 11px;
-    color: rgba(255,255,255,0.6);
-    letter-spacing: 0.05em;
-    z-index: 5;
-    pointer-events: none;
-  }
-  .coord.tl { top: 16px; left: 20px; }
-  .coord.tr { top: 16px; right: 20px; }
-  .coord.bl { bottom: 16px; left: 20px; }
-  .coord.br { bottom: 16px; right: 20px; }
-
   header { padding: 80px 32px 40px; text-align: center; position: relative; }
 
   .eyebrow {
@@ -86,18 +72,6 @@
     color: rgba(255,255,255,0.85);
     margin-top: 16px;
   }
-
-  .intro {
-    max-width: 640px;
-    margin: 40px auto 0;
-    font-size: 15px;
-    line-height: 1.6;
-    color: rgba(255,255,255,0.85);
-    text-align: left;
-    border-left: 2px solid var(--cc-yellow);
-    padding-left: 20px;
-  }
-  .intro strong { color: var(--cc-yellow); font-weight: 700; }
 
   .day-nav {
     position: sticky;
@@ -135,7 +109,7 @@
 
   .day-header {
     display: grid;
-    grid-template-columns: auto 1fr auto;
+    grid-template-columns: auto 1fr;
     align-items: end;
     gap: 24px;
     border-bottom: 2px solid var(--cc-yellow);
@@ -167,24 +141,6 @@
     text-transform: uppercase;
   }
 
-  .day-meta {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 11px;
-    letter-spacing: 0.1em;
-    color: rgba(255,255,255,0.6);
-    text-align: right;
-    text-transform: uppercase;
-  }
-
-  .day-tagline {
-    max-width: 540px;
-    margin-bottom: 48px;
-    font-size: 16px;
-    line-height: 1.6;
-    color: rgba(255,255,255,0.85);
-    font-style: italic;
-  }
-
   .clusters { display: grid; gap: 32px; }
 
   .cluster {
@@ -193,28 +149,15 @@
     background: rgba(0,0,0,0.08);
   }
 
-  .cluster-header {
-    display: flex;
-    align-items: baseline;
-    justify-content: space-between;
-    gap: 16px;
-    margin-bottom: 20px;
-    padding-bottom: 12px;
-    border-bottom: 1px dashed rgba(255,255,255,0.2);
-  }
   .cluster-genre {
     font-family: 'Anton', sans-serif;
     font-size: clamp(22px, 3vw, 30px);
     letter-spacing: 0.01em;
     text-transform: uppercase;
     color: var(--cc-yellow);
-  }
-  .cluster-count {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 11px;
-    letter-spacing: 0.1em;
-    color: rgba(255,255,255,0.55);
-    white-space: nowrap;
+    margin-bottom: 20px;
+    padding-bottom: 12px;
+    border-bottom: 1px dashed rgba(255,255,255,0.2);
   }
 
   .artist-grid {
@@ -338,7 +281,6 @@
     header { padding: 60px 20px 30px; }
     main { padding: 30px 16px; }
     .day-header { grid-template-columns: 1fr; gap: 8px; }
-    .day-meta { text-align: left; }
     .cluster { padding: 18px 16px 22px; }
     .artist-grid { grid-template-columns: 1fr; }
     .artist { min-height: 0; }
@@ -348,24 +290,15 @@
     .embed-slot iframe,
     .embed-slot .embed-mount { height: 152px; }
     .embed-slot.open { max-height: 172px; }
-    .coord { font-size: 9px; }
   }
 </style>
 </head>
 <body>
 
-<span class="coord tl">19°23'52.0"N</span>
-<span class="coord tr">99°05'11.0"W</span>
-<span class="coord bl">AUTÓDROMO HNOS. RODRÍGUEZ</span>
-<span class="coord br">CDMX · MX</span>
-
 <header>
   <div class="eyebrow">NOVIEMBRE 20 · 21 · 22 · 2026</div>
   <h1 class="fest-title">Corona<br>Capital <span class="year">26</span></h1>
-  <div class="subtitle">— LINEUP BY GENRE · TAP ANY ARTIST TO LISTEN —</div>
-  <div class="intro">
-    Every artist on the bill, grouped into <strong>genre clusters by day</strong>. Tap a name to play.
-  </div>
+  <div class="subtitle">LINEUP BY GENRE · TAP TO LISTEN</div>
 </header>
 
 <nav class="day-nav">
@@ -387,9 +320,7 @@ const DATA = {
   friday: {
     num: "20",
     name: "Friday",
-    meta: "DAY 01 / 03<br>NOV · VIERNES",
     headliner: "Gorillaz",
-    tagline: "A folk-leaning, melodic day with strong R&B and alt-pop pockets.",
     clusters: [
       {
         genre: "Electronic / Alt",
@@ -450,9 +381,7 @@ const DATA = {
   saturday: {
     num: "21",
     name: "Saturday",
-    meta: "DAY 02 / 03<br>NOV · SÁBADO",
     headliner: "Twenty One Pilots",
-    tagline: "The most rock-heavy day, balanced by dreamy indie pop and an electronic spine.",
     clusters: [
       {
         genre: "Alt rock / Indie rock",
@@ -512,9 +441,7 @@ const DATA = {
   sunday: {
     num: "22",
     name: "Sunday",
-    meta: "DAY 03 / 03<br>NOV · DOMINGO",
     headliner: "The Strokes",
-    tagline: "The most eclectic day. Classic indie spine with strong hip-hop & electronic side rooms.",
     clusters: [
       {
         genre: "Indie / Alt rock",
@@ -576,8 +503,6 @@ const DATA = {
 
 const DAY_ORDER = ['friday', 'saturday', 'sunday'];
 
-function pad2(n) { return String(n).padStart(2, '0'); }
-
 function escapeHtml(s) {
   return String(s)
     .replace(/&/g, '&amp;')
@@ -598,16 +523,12 @@ function renderArtist(artist) {
 }
 
 function renderCluster(cluster) {
-  const count = cluster.artists.length;
   const gridItems = cluster.artists.map(a =>
     renderArtist(a) + '<div class="embed-slot embed-slot-inline"></div>'
   ).join('');
   return `
     <div class="cluster">
-      <div class="cluster-header">
-        <div class="cluster-genre">${escapeHtml(cluster.genre)}</div>
-        <div class="cluster-count">${pad2(count)} ARTIST${count === 1 ? '' : 'S'}</div>
-      </div>
+      <div class="cluster-genre">${escapeHtml(cluster.genre)}</div>
       <div class="artist-grid">${gridItems}</div>
       <div class="embed-slot embed-slot-cluster"></div>
     </div>
@@ -625,9 +546,7 @@ function renderDay(key) {
           <div class="day-name">${d.name}</div>
           <div class="day-headliner">Headliner · ${escapeHtml(d.headliner)}</div>
         </div>
-        <div class="day-meta">${d.meta}</div>
       </div>
-      <p class="day-tagline">${escapeHtml(d.tagline)}</p>
       <div class="clusters">${clustersHTML}</div>
     </section>
   `;
