@@ -316,8 +316,6 @@
     display: block;
     border-radius: 4px;
   }
-  /* Desktop default: embed appears at the bottom of the cluster.
-     Inline slots (one per artist) stay out of the grid. */
   .embed-slot-inline {
     display: none;
   }
@@ -344,13 +342,9 @@
     .cluster { padding: 18px 16px 22px; }
     .artist-grid { grid-template-columns: 1fr; }
     .artist { min-height: 0; }
-    /* Mobile: embed appears directly under the tapped artist, not at the
-       bottom of the cluster. Swap which slot type is rendered. */
     .embed-slot-inline { display: block; }
     .embed-slot-cluster { display: none; }
-    /* Spotify's full-preview embed (352px) needs ~400px+ width to render
-       its album-art + tracks layout. On mobile, use the compact embed
-       (152px) — fits any width, shows the play bar with the current track. */
+    /* Spotify's 352px preview overflows below ~400px wide; 152px stays compact. */
     .embed-slot iframe,
     .embed-slot .embed-mount { height: 152px; }
     .embed-slot.open { max-height: 172px; }
@@ -370,7 +364,7 @@
   <h1 class="fest-title">Corona<br>Capital <span class="year">26</span></h1>
   <div class="subtitle">— LINEUP BY GENRE · TAP ANY ARTIST TO LISTEN —</div>
   <div class="intro">
-    Every artist on the bill, sorted into <strong>genre clusters by day</strong>. Tap any name to drop in an embedded Spotify player below their cluster — no leaving the page. Headliners are highlighted in yellow.
+    Every artist on the bill, grouped into <strong>genre clusters by day</strong>. Tap a name to play.
   </div>
 </header>
 
@@ -400,7 +394,7 @@ const DATA = {
       {
         genre: "Electronic / Alt",
         artists: [
-          { name: "Gorillaz", tag: "alt / electronic / hip-hop · headliner", id: "3AA28KZvwAUcZuOKwyblJQ", headliner: true },
+          { name: "Gorillaz", tag: "alt / electronic / hip-hop · headliner", id: "3AA28KZvwAUcZuOKwyblJQ" },
           { name: "James Blake", tag: "electronic / art pop", id: "53KwLdlmrlCelAZMaLVZqU" },
           { name: "CHVRCHES", tag: "synth-pop", id: "3CjlHNtplJyTf9npxaPl5w" },
           { name: "FCUKERS", tag: "house / electro", id: "3UtzOHYm3lQALkKzVD4wyO" }
@@ -463,7 +457,7 @@ const DATA = {
       {
         genre: "Alt rock / Indie rock",
         artists: [
-          { name: "Twenty One Pilots", tag: "alt / genre-fluid · headliner", id: "3YQKmKGau1PzlVlkL1iodx", headliner: true },
+          { name: "Twenty One Pilots", tag: "alt / genre-fluid · headliner", id: "3YQKmKGau1PzlVlkL1iodx" },
           { name: "Mother Mother", tag: "alt rock", id: "0e86yPdC41PGRkLp2Q1Bph" },
           { name: "We Are Scientists", tag: "indie rock", id: "35YNL4wwv11ZkmeWWL51y7" }
         ]
@@ -525,7 +519,7 @@ const DATA = {
       {
         genre: "Indie / Alt rock",
         artists: [
-          { name: "The Strokes", tag: "indie rock · headliner", id: "0epOFNiUfyON9EYx7Tpr6V", headliner: true },
+          { name: "The Strokes", tag: "indie rock · headliner", id: "0epOFNiUfyON9EYx7Tpr6V" },
           { name: "The xx", tag: "indie / minimalist", id: "3iOvXCl6edW5Um0fXEBRXy" },
           { name: "Bad Suns", tag: "indie rock", id: "0YhUSm86okLWldQVwJkLlP" },
           { name: "Good Kid", tag: "indie pop / rock", id: "38SKxCyfrmNWqWunb9wGHP" },
@@ -594,26 +588,17 @@ function escapeHtml(s) {
 }
 
 function renderArtist(artist) {
-  const headlinerClass = artist.headliner ? ' headliner' : '';
-  const dataAttrs = artist.id
-    ? `data-id="${escapeHtml(artist.id)}"`
-    : `data-search="${escapeHtml(artist.search || artist.name)}"`;
-  const cue = artist.id
-    ? ''
-    : '▶ Open in Spotify ↗';
   return `
-    <button class="artist${headlinerClass}" ${dataAttrs} data-name="${escapeHtml(artist.name)}" type="button">
+    <button class="artist" data-id="${escapeHtml(artist.id)}" data-name="${escapeHtml(artist.name)}" type="button">
       <div class="artist-name">${escapeHtml(artist.name)}</div>
       <div class="artist-tag">${escapeHtml(artist.tag)}</div>
-      <div class="artist-cue">${cue}</div>
+      <div class="artist-cue"></div>
     </button>
   `;
 }
 
 function renderCluster(cluster) {
   const count = cluster.artists.length;
-  // Each artist gets its own inline embed slot for mobile (directly below the
-  // tapped artist). The cluster-level slot at the bottom is for desktop.
   const gridItems = cluster.artists.map(a =>
     renderArtist(a) + '<div class="embed-slot embed-slot-inline"></div>'
   ).join('');
@@ -650,40 +635,25 @@ function renderDay(key) {
 
 document.getElementById('app').innerHTML = DAY_ORDER.map(renderDay).join('');
 
-// --- Spotify IFrame API (autoplay support) ---
-// The script tag is in <head> with async — this just receives the ready callback.
 let SpotifyAPI = null;
 let pendingMount = null;
-
-// Pre-warmed shared controller. iOS Safari requires .play() to be called
-// SYNCHRONOUSLY inside the user-gesture event handler — but createController's
-// callback is async, so on first click the gesture has gone stale by the time
-// the callback fires, and mobile blocks autoplay. We solve this by creating
-// one controller up front in a hidden offscreen mount. On click, we move that
-// iframe into the clicked slot and call loadUri + play synchronously.
 let sharedController = null;
 let sharedIframe = null;
 let hiddenMount = null;
-const PRELOAD_URI = 'spotify:artist:3AA28KZvwAUcZuOKwyblJQ'; // Gorillaz (a placeholder, paused immediately)
 
 window.onSpotifyIframeApiReady = (api) => {
   SpotifyAPI = api;
 
-  // Spin up the shared controller offscreen. We use the actual viewport width
-  // so Spotify's iframe renders its content at a width that matches where it
-  // will end up (preventing overflow when moved into a narrower mobile slot).
   hiddenMount = document.createElement('div');
-  hiddenMount.id = 'spotify-prewarmed-mount';
   hiddenMount.style.cssText = 'position:fixed;left:-9999px;top:-9999px;width:100vw;pointer-events:none;';
   document.body.appendChild(hiddenMount);
 
   api.createController(
     hiddenMount,
-    { uri: PRELOAD_URI, width: '100%', height: 352 },
+    { uri: 'spotify:artist:3AA28KZvwAUcZuOKwyblJQ', width: '100%', height: 352 },
     (controller) => {
       sharedController = controller;
       sharedIframe = hiddenMount.querySelector('iframe');
-      // We don't want the placeholder actually playing in the background.
       try { controller.pause(); } catch (e) {}
     }
   );
@@ -691,8 +661,6 @@ window.onSpotifyIframeApiReady = (api) => {
   if (pendingMount) { pendingMount(); pendingMount = null; }
 };
 
-// Warm the cache: on hover, prefetch the artist's embed HTML so clicking it
-// feels near-instant. Each artist prefetches at most once.
 document.addEventListener('mouseover', (e) => {
   const btn = e.target.closest && e.target.closest('.artist[data-id]');
   if (!btn || btn._prefetched) return;
@@ -718,147 +686,107 @@ function closeOpenEmbed() {
   openSlot = null;
   openButton = null;
   openController = null;
-  // Pause immediately (the slide-close animation hides the player visually,
-  // but audio would keep playing without this).
   if (controllerToHandle) {
     try { controllerToHandle.pause(); } catch (e) {}
   }
   setTimeout(() => {
-    if (!slotToClose.classList.contains('open')) {
-      // Shared controller's iframe: move it back to the hidden mount so it
-      // stays alive for the next click (preserves autoplay capability).
-      // Per-slot fallback iframe: just wipe.
-      if (sharedIframe && slotToClose.contains(sharedIframe)) {
-        if (hiddenMount) hiddenMount.appendChild(sharedIframe);
-      } else {
-        slotToClose.innerHTML = '';
-      }
+    if (slotToClose.classList.contains('open')) return;
+    if (sharedIframe && slotToClose.contains(sharedIframe)) {
+      if (hiddenMount) hiddenMount.appendChild(sharedIframe);
+    } else {
+      slotToClose.innerHTML = '';
     }
   }, 400);
 }
 
-document.addEventListener('click', function(e) {
-  // Close button inside an embed
-  if (e.target.classList && e.target.classList.contains('embed-close')) {
-    e.stopPropagation();
-    closeOpenEmbed();
+document.addEventListener('click', (e) => {
+  const btn = e.target.closest('.artist');
+  if (!btn) return;
+  e.preventDefault();
+
+  const id = btn.dataset.id;
+  const name = btn.dataset.name;
+  const cluster = btn.closest('.cluster');
+  const isMobile = window.matchMedia('(max-width: 640px)').matches;
+  const slot = isMobile
+    ? btn.nextElementSibling
+    : cluster.querySelector('.embed-slot-cluster');
+
+  if (openButton === btn) { closeOpenEmbed(); return; }
+  if (openSlot && openSlot !== slot) closeOpenEmbed();
+
+  // openSlot must be set before createController runs — its async callback
+  // checks `openSlot === slot` and would otherwise destroy a fresh controller.
+  cluster.querySelectorAll('.artist.active').forEach(a => a.classList.remove('active'));
+  openSlot = slot;
+  openButton = btn;
+  btn.classList.add('active');
+
+  requestAnimationFrame(() => slot.classList.add('open'));
+
+  const renderBasicIframe = () => {
+    if (openSlot !== slot) return;
+    slot.innerHTML = `
+      <iframe
+        src="https://open.spotify.com/embed/artist/${encodeURIComponent(id)}?utm_source=generator&theme=0"
+        allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
+        loading="eager"
+        referrerpolicy="strict-origin-when-cross-origin"
+        title="Spotify player for ${escapeHtml(name)}"></iframe>
+    `;
+  };
+
+  // Mobile: Spotify content rendered for the hidden mount's width doesn't
+  // reflow when moved to a narrower slot, and iOS Safari blocks autoplay
+  // from async API callbacks anyway. Use a plain iframe at the slot's width.
+  if (isMobile) {
+    renderBasicIframe();
     return;
   }
 
-  // Artist button
-  const btn = e.target.closest('.artist');
-  if (!btn) return;
-
-  e.preventDefault();
-  const id = btn.dataset.id;
-  const search = btn.dataset.search;
-  const name = btn.dataset.name;
-
-  if (id) {
-    const cluster = btn.closest('.cluster');
-    // Mobile: embed slot is the sibling immediately after the tapped artist.
-    // Desktop: embed slot is the cluster-level one at the bottom.
-    const isMobile = window.matchMedia('(max-width: 640px)').matches;
-    const slot = isMobile
-      ? btn.nextElementSibling
-      : cluster.querySelector('.embed-slot-cluster');
-
-    // If clicking the already-active artist, toggle closed
-    if (openButton === btn) {
-      closeOpenEmbed();
-      return;
-    }
-
-    // If a different artist is open, close it first
-    if (openSlot && openSlot !== slot) {
-      closeOpenEmbed();
-    }
-
-    // Set state FIRST so async callbacks see the right openSlot.
-    cluster.querySelectorAll('.artist.active').forEach(a => a.classList.remove('active'));
-    openSlot = slot;
-    openButton = btn;
-    btn.classList.add('active');
-
-    requestAnimationFrame(() => {
-      slot.classList.add('open');
-    });
-
-    const renderFallbackIframe = () => {
-      if (openSlot !== slot) return;
-      slot.innerHTML = `
-        <iframe
-          src="https://open.spotify.com/embed/artist/${encodeURIComponent(id)}?utm_source=generator&theme=0"
-          allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
-          loading="eager"
-          referrerpolicy="strict-origin-when-cross-origin"
-          title="Spotify player for ${escapeHtml(name)}"></iframe>
-      `;
-    };
-
-    if (isMobile) {
-      // MOBILE: render a basic iframe. The IFrame API has two problems on
-      // mobile: (1) Spotify content rendered for hidden-mount width doesn't
-      // reflow when moved to a narrow mobile slot, and (2) the async
-      // createController callback fires after iOS Safari considers the
-      // user gesture stale, so autoplay would be blocked anyway. The user
-      // taps Spotify's play button — same as any other Spotify embed on
-      // mobile. The iframe is created at the slot's actual width.
-      renderFallbackIframe();
-    } else if (sharedController && sharedIframe) {
-      // DESKTOP HOT PATH: shared controller is ready. Move its iframe into
-      // this slot and call loadUri + play SYNCHRONOUSLY (no async gap) so
-      // autoplay works on every click after the first.
-      slot.innerHTML = '';
-      slot.appendChild(sharedIframe);
-      openController = sharedController;
-      try { sharedController.loadUri(`spotify:artist:${id}`); } catch (e) {}
-      try { sharedController.play(); } catch (e) {}
-    } else {
-      // DESKTOP COLD PATH: API not ready yet (first click during the ~1s
-      // before the IFrame API script finishes loading). Mount a per-slot
-      // controller. May not autoplay on this first click; subsequent clicks
-      // go through the hot path.
-      slot.innerHTML = '<div class="embed-mount"></div>';
-      const mount = slot.querySelector('.embed-mount');
-
-      const mountController = () => {
-        if (openSlot !== slot) return;
-        try {
-          SpotifyAPI.createController(
-            mount,
-            { uri: `spotify:artist:${id}`, width: '100%', height: 352 },
-            (controller) => {
-              if (openSlot !== slot) { try { controller.destroy(); } catch (e) {} return; }
-              openController = controller;
-              try { controller.play(); } catch (e) {}
-            }
-          );
-        } catch (e) {
-          renderFallbackIframe();
-        }
-      };
-
-      if (SpotifyAPI) {
-        mountController();
-      } else {
-        pendingMount = mountController;
-        setTimeout(() => {
-          if (openSlot === slot && !openController && !slot.querySelector('iframe')) {
-            pendingMount = null;
-            renderFallbackIframe();
-          }
-        }, 3000);
-      }
-    }
-
-    setTimeout(() => {
-      slot.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-    }, 300);
-  } else if (search) {
-    const q = encodeURIComponent(search);
-    window.open('https://open.spotify.com/search/' + q, '_blank', 'noopener,noreferrer');
+  // Desktop hot path: synchronous .play() on the shared controller — required
+  // so the browser still treats it as user-gesture-initiated.
+  if (sharedController && sharedIframe) {
+    slot.innerHTML = '';
+    slot.appendChild(sharedIframe);
+    openController = sharedController;
+    try { sharedController.loadUri(`spotify:artist:${id}`); } catch (e) {}
+    try { sharedController.play(); } catch (e) {}
+    return;
   }
+
+  // Desktop cold path: shared controller isn't ready yet (first click before
+  // the IFrame API script has finished loading).
+  slot.innerHTML = '<div class="embed-mount"></div>';
+  const mount = slot.querySelector('.embed-mount');
+  const mountController = () => {
+    if (openSlot !== slot) return;
+    try {
+      SpotifyAPI.createController(
+        mount,
+        { uri: `spotify:artist:${id}`, width: '100%', height: 352 },
+        (controller) => {
+          if (openSlot !== slot) { try { controller.destroy(); } catch (e) {} return; }
+          openController = controller;
+          try { controller.play(); } catch (e) {}
+        }
+      );
+    } catch (e) { renderBasicIframe(); }
+  };
+
+  if (SpotifyAPI) {
+    mountController();
+  } else {
+    pendingMount = mountController;
+    setTimeout(() => {
+      if (openSlot === slot && !openController && !slot.querySelector('iframe')) {
+        pendingMount = null;
+        renderBasicIframe();
+      }
+    }, 3000);
+  }
+
+  setTimeout(() => slot.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 300);
 }, false);
 
 document.querySelectorAll('.day-nav button').forEach(b => {
